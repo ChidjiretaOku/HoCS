@@ -4,6 +4,8 @@
 #include "Letter.h"
 
 using namespace std;
+
+
 vector<Letter> vect = {Letter("А", 1), Letter("Б", 2), Letter("В", 3), Letter("Г", 4), Letter("Д", 5),
                        Letter("Е", 6),
                        Letter("Ё", 7), Letter("Ж", 8), Letter("З", 9), Letter("И", 10), Letter("Й", 11),
@@ -15,8 +17,15 @@ vector<Letter> vect = {Letter("А", 1), Letter("Б", 2), Letter("В", 3), Letter
                        Letter("Ъ", 28), Letter("Ы", 29), Letter("Ь", 30), Letter("Э", 31), Letter("Ю", 32),
                        Letter("Я", 33)};
 
+vector<string> cypher = {"Ц", "Д", "О", "З", "И", "Ф", "К", "Д", "Ц", "Ю"};
+
+
 int discriminant(int a, int b, int c) {
     return (b * b - 4 * a * c);
+}
+
+bool oneRoot(vector<int> shift) {
+    return (shift[0] == shift[1]);
 }
 
 vector<int> polynomial(vector<float> ans) {
@@ -50,33 +59,96 @@ void output(vector<string> v) {
     cout << endl;
 }
 
-int main() {
+vector<vector<string>> decrypting(vector<int> shift) {
 
-//    SetConsoleOutputCP(CP_UTF8);
-    auto ans = equation(1, 3, 1);
-    auto shift = polynomial(ans);
+    vector<vector<string>> decrypted = {{},
+                                        {}};
 
-    vector<string> cypher = {"Ц", "Д", "О", "З", "И", "Ф", "К", "Д", "Ц", "Ю"};
+    if (oneRoot(shift)) {
+        decrypted.pop_back();
 
-    output(cypher);
-
-    for (int i = 0; i < cypher.size(); ++i) {
-        string temp = cypher[i];
-        for (int j = 0; j < 33; ++j) {
-            if (temp == vect[j].getLetter()) {
-                for (int k = 0; k < 33; ++k) {
-                    if (vect[k].getCode() == (vect[j].getCode() - shift[0])) {
-                        string tmp = vect[k].getLetter();
-                        cypher[i] = tmp;
-                        break;
+        for (int i = 0; i < cypher.size(); ++i) {
+            string temp = cypher[i];
+            for (int j = 0; j < 33; ++j) {
+                if (temp == vect[j].getLetter()) {
+                    for (int k = 0; k < 33; ++k) {
+                        if (vect[k].getCode() == (vect[j].getCode() - shift[0])) {
+                            string tmp = vect[k].getLetter();
+                            decrypted[0].push_back(tmp);
+                            break;
+                        }
                     }
+                    break;
                 }
-                break;
+            }
+        }
+    } else {
+        for (int i = 0; i < cypher.size(); ++i) {            // цикл длины шифра
+            string temp = cypher[i];                         // первая буква шифра
+            for (int j = 0; j < 33; ++j) {                   // для каждой буквы алфавита
+                if (temp == vect[j].getLetter()) {           // сравнение i-ой буквы шифра с j-ой буквой алфавита
+                    int N = decrypted.size();
+                    for (int k = 0; k < 33; ++k) {
+                        if (vect[k].getCode() == (vect[j].getCode() - shift[0])) {  // поиск сдвинутой буквы
+                            for (int m = 0; m <
+                                            N; ++m) {                           // если нашлась то дублируем все векторы из decrypted
+                                string tmp = vect[k].getLetter();                   // и добавляем в конец букву
+                                vector<string> temp_vector = decrypted[m];
+                                temp_vector.push_back(tmp);
+                                decrypted.push_back(temp_vector);
+                            }
+                        }
+                        if (vect[k].getCode() == (vect[j].getCode() - shift[1])) {  // поиск сдвинутой буквы
+                            for (int n = 0; n <
+                                            N; ++n) {                           // если нашлась то дублируем все векторы из decrypted
+                                string tmp = vect[k].getLetter();                   // и добавляем в конец букву
+                                vector<string> temp_vector = decrypted[n];
+                                temp_vector.push_back(tmp);
+                                decrypted.push_back(temp_vector);
+
+                            }
+                        }
+                        if (k == 32) {
+                            decrypted.erase(decrypted.begin(),
+                                            decrypted.begin() + N); // удаляем старые варианты вектора
+                        }
+                    }
+
+                }
             }
         }
     }
+    return decrypted;
+}
+
+void removeDuplicates(vector<vector<string>> decrypted) {
+    for (int l = decrypted.size(); l >= 0; --l) { // проверка на дубликаты
+        for (int i = l - 1; i >= 0; --i) {
+            if (decrypted[l] == decrypted[i]) {
+                decrypted.erase(decrypted.begin() + i);
+            }
+        }
+    }
+}
+
+int main() {
+
+    //SetConsoleOutputCP(CP_UTF8);
+    auto ans = equation(1, 3, 1);
+    auto shift = polynomial(ans);
+
 
     output(cypher);
+
+    auto decrypted = decrypting(shift);
+
+    if (!oneRoot(shift)) {
+        removeDuplicates(decrypted);
+    }
+
+    for (int i = 0; i < decrypted.size(); ++i) {
+        output(decrypted[i]);
+    }
 
     cin.get();
 
